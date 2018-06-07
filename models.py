@@ -48,10 +48,6 @@ class Node(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('nodes.id'))
     children = relationship("Node", backref=backref('parent', remote_side=[id]), cascade="all, delete-orphan")
 
-    def __init__(self, name, type, parent_id):
-        self.name = name
-        self.type = type
-        self.parent_id = parent_id
 
     def __repr__(self):
         return '<id: {}, name: {}, type: {} , parent_id: {}, children: \n\t{}>'.format(self.id, self.name, self.type, self.parent_id, self.children)
