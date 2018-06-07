@@ -307,9 +307,9 @@ def get_document(asking_staff, id):
     document_details = documentSchema.dump(requested_document).data
     return jsonify(document_details), 200
 
-#
-# def check_document_integrity(new_document):
-#     return True, "Pas de probleme"
+
+def check_document_integrity(new_document):
+    return True, "Pas de probleme"
 
 
 @app.route("/documents", methods=["POST"])
