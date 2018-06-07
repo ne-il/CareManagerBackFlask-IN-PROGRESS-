@@ -60,10 +60,13 @@ class Node(db.Model):
 class NodeSchema(Schema):
     id = fields.Integer()
     name = fields.String()
-    type = fields.String()
+    label = fields.String(attribute="name")
+
     type = EnumField(NodeType, by_value=True)
     children = fields.Nested('self', many=True)
     parent_id = fields.Integer()
+    expanded = fields.Boolean(True)
+    className = EnumField(NodeType, by_value=True, attribute="type")
 
     @post_load
     def make_user(self, data):
@@ -84,15 +87,6 @@ class Patient(db.Model):
     documents = relationship("Document", back_populates="patient")
     node = relationship("Node", back_populates="patients")
     node_id = db.Column(db.Integer, db.ForeignKey('nodes.id'))
-
-    # def __init__(self, firstName, lastName, social_security_number, address, birthdate, place_of_birth, node_id):
-    #     self.firstName = firstName
-    #     self.lastName = lastName
-    #     self.social_security_number = social_security_number
-    #     self.address = address
-    #     self.birthdate = birthdate
-    #     self.place_of_birth = place_of_birth
-    #     self.node_id = node_id
 
     def __repr__(self):
         return '<id: {}, firstName: {}, lastName: {}, social_security_number: {}, documents: {}, affected_node: {} >'.format(self.id, self.firstName, self.lastName, self.social_security_number, self.documents, self.node)
@@ -132,14 +126,6 @@ class Document(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('staffs.id'))
     author = relationship("Staff", back_populates="documents")
 
-    def __init__(self, type, status, patient_id, author_id):
-        self.type = type
-        self.status = status
-        # self.description = description
-        # self.url_image = url_image
-        self.patient_id = patient_id
-        self.author_id = author_id
-
     def __repr__(self):
         return '<id: {}, patient_id: {}, author_id: {}, description: {}, status: {}, type: {} >'.format(self.id, self.patient_id, self.author_id,
                                                                                          self.description, self.status,
@@ -147,14 +133,19 @@ class Document(db.Model):
 
 
 class DocumentSchema(Schema):
-    id = fields.Integer(required=True)
+    id = fields.Integer()
     type = EnumField(DocumentType, by_value=True)
-    status = EnumField(DocumentStatus, by_value=True)
+    status = EnumField(DocumentStatus, by_value=True, required=True)
     description = fields.String()
     url_image = fields.String()
     validation_ts = fields.Time()
     patient = fields.Nested(PatientSchema)
     patient_id = fields.Integer(required=True)
+    author_id = fields.Integer(required=True)
+
+    @post_load
+    def make_document(self, data):
+        return Document(**data)
 # ================================================================================
 
 
@@ -163,18 +154,16 @@ class Staff(db.Model):
     __tablename__ = 'staffs'
 
     id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(50), unique=True)
     firstName = db.Column(db.String())
     lastName = db.Column(db.String())
     type = db.Column(db.Enum(StaffType))
     documents = relationship("Document", back_populates="author")
     node = relationship("Node", back_populates="staffs")
     node_id = db.Column(db.Integer, db.ForeignKey('nodes.id'))
-
-    def __init__(self, firstName, lastName, type, node_id):
-        self.firstName = firstName
-        self.lastName = lastName
-        self.type = type
-        self.node_id = node_id
+    login = db.Column(db.String(), unique=True)
+    password = db.Column(db.String())
+    email = db.Column(db.String())
 
     def __repr__(self):
         return '\n <id {}, firstName: {}, lastName: {}, type: {}, node_id: {}>'.format(self.id, self.firstName, self.lastName, self.type, self.node_id)
@@ -184,7 +173,13 @@ class StaffSchema(Schema):
     firstName = fields.String()
     lastName = fields.String()
     type = EnumField(StaffType, by_value=True)
-    # node = fields.Nested(NodeSchema)
     node_id = fields.Integer()
+    login = fields.String()
+    password = fields.String(load_only=True)
+    email = fields.Email()
+
+    @post_load
+    def make_staff(self, data):
+        return Staff(**data)
 # ================================================================================
 

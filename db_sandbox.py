@@ -37,10 +37,11 @@ def add_patient():
     db.session.add(patient)
 
 def add_staff():
-    hopital = Node.query.filter_by(type=NodeType.HOSPITAL).first()
+    # hopital = Node.query.filter_by(type=NodeType.HOSPITAL).first()
+    hopital = Node.query.filter_by(type=NodeType.CARE_UNIT).first()
     staff = Staff(firstName=generate_random_string(5),
                   lastName=generate_random_string(5),
-                  type=StaffType.SECRETARY,
+                  type=StaffType.DOCTOR,
                   node_id=hopital.id)
     db.session.add(staff)
 
@@ -54,8 +55,9 @@ def add_root_staff():
 
 
 def add_document():
-    p = Patient.query.first()
-    s = Staff.query.first()
+    p = Patient.query.filter_by(node_id=57).first()
+    s = Staff.query.filter_by(node_id=49).first()
+
     d = Document(type = DocumentType.OBSERVATION,
                  status = DocumentStatus.VALIDATED,
                  patient_id = p.id,
@@ -164,7 +166,26 @@ def generation_arborescence():
 # asking_staff.node = saintantoine
 #
 # db.session.commit()
+#
+# n = Node.query.get(59)
+#
+# print(n.patients)
 
-n = Node.query.get(59)
+def is_a_child(father_node, child_node):
+    for n in father_node.children:
+        return n == child_node or is_a_child(n, child_node)
+    return False
 
-print(n.patients)
+# saint_antoine = Node.query.filter_by(name="HOPITAL SAINT ANTOINE").first()
+# saint_louis = Node.query.filter_by(name="HOPITAL SAINT LOUIS").first()
+# cardio = Node.query.filter_by(name="SA_CARDIOLOGIE").first()
+# neuro = Node.query.filter_by(name="SL_NEUROLOGIE").first()
+# care_unit = Node.query.filter_by(name="SA_US-CARDIO-1").first()
+
+# s = Staff.query.get(10)
+# s.node_id = 49
+
+# add_document()
+add_staff()
+db.session.commit()
+
